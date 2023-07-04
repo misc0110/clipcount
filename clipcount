@@ -1,0 +1,50 @@
+#!/bin/bash
+HAS_XSEL=0
+HAS_XCLIP=0
+HAS_ZENITY=0
+HAS_KDIALOG=0
+
+xsel --version 2>&1 > /dev/null
+if [ $? -eq 0 ];
+then 
+    let HAS_XSEL=1
+fi
+if [ $HAS_XSEL -eq 0 ];
+then
+    xclip -h 2>&1 > /dev/null
+    if [ $? -eq 0 ];
+    then 
+        let HAS_XCLIP=1
+    fi
+fi
+
+zenity --help 2>&1 > /dev/null
+if [ $? -eq 0 ];
+then 
+    let HAS_ZENITY=1
+fi
+
+if [ $HAS_ZENITY -eq 0 ];
+then
+    # try for KDE
+    kdialog 2>&1 > /dev/null
+    if [ $? -eq 0 ];
+    then 
+        let HAS_KDIALOG=1
+    fi
+fi
+
+
+if [ $HAS_XSEL -eq 1 ];
+then
+    M="$(xsel | wc | awk '{print "Lines: "$1"\nWords: "$2"\nBytes: "$3}')"
+else
+    M="$(xclip -o | wc | awk '{print "Lines: "$1"\nWords: "$2"\nBytes: "$3}')"
+fi
+
+if [ $HAS_ZENITY -eq 1 ];
+then
+    zenity --info --text "$M" --title "Word count" 2>&1 > /dev/null &
+else
+    kdialog --msgbox "$M" --title "Word count" 2>&1 > /dev/null &
+fi
